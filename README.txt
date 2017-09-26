@@ -1,7 +1,8 @@
 #///////////////////////////////////////////////////////////////////////////////#
 # 
 # The automated backup "script" consists of two files:
-# module: AutoBackup.pm and script: cpbackup.pl
+# a module: AutoBackup.pm and a script: cpbackup.pl
+# 
 # Having a separate module has a number of pros, such as:
 #
 #	- Less chance of side effects;
@@ -32,7 +33,7 @@
 curl -sO https://raw.githubusercontent.com/PlasticVader/cPanelAutoBackup/master/cpbackup_install.sh && bash cpbackup_install.sh
 
 
-# This will install the script into ~/cPanelAutoBackup
+# This will install the script into ~/cPanelAutoBackup directory
 # and the module into one of the module directories in the @INC array.
 # 
 # The next step is to just copy your cPanel account password after the 'local:' 
@@ -81,7 +82,7 @@ curl -sO https://raw.githubusercontent.com/PlasticVader/cPanelAutoBackup/master/
 #     - silent
 #     - quiet
 #
-#  7) Output file (default is ~/cpbackup-report.txt):
+#  7) Output file (default is ~/cPanelAutoBackup/cpbackup-report.txt):
 #
 #     - file=
 #
