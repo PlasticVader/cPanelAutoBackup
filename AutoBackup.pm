@@ -371,6 +371,7 @@ sub predefined {
     my ($exclude_conf, $exclude_success, $exclude_no_need);
     my ($session_url, $login_success, $login_failure);
     my ($backup_status, $backup_success, $backup_failure);
+    my ($passwd, $password_okay, $password_failure);
     my (%reply_types);
 
     if (defined $self->{excludeFile}) {
@@ -379,6 +380,7 @@ sub predefined {
 
     $session_url   = $self->get_session_url;
     $backup_status = $self->get_backup_status;
+    $passwd        = $self->{passwd};
 
     $reply_1
         = "\n+------------------------------------------------------+"
@@ -404,6 +406,10 @@ sub predefined {
         = "  Full cPanel backup has been successfully initialized:\n\n  $backup_status\n";
     $backup_failure
         = "  Full cPanel backup initialization failed:\n\n  $backup_status\n";
+    $password_failure
+        = "  The passwords file $passwd is not present:\n\n  Aborting...\n";
+    $password_okay
+        = "  The passwords file $passwd is present:\n\n  Proceeding...\n";
 
     %reply_types = (
         'reply_1'          => $reply_1,
@@ -415,6 +421,8 @@ sub predefined {
         'login_failure'    => $login_failure,
         'generate_success' => $backup_success,
         'generate_failure' => $backup_failure,
+        'password_okay'    => $password_okay,
+        'password_failure' => $password_failure,
     );
     return $reply_types{$type};
 }
@@ -429,35 +437,40 @@ sub init {
     my $out;
 
     if ($self->check_passwords) {
-
-        $out .= $self->predefined('reply_1');
-
-        if ($self->check_exclude_conf_file) {
-            $out .= $self->predefined('exclude_success');
-        }
-        else {
-    	    $out .= $self->predefined('exclude_no_need');
-        }
-
-        $out .= $self->predefined('reply_2');
-
-        if ($self->cpanel_login) {
-            $out .= $self->predefined('login_success');
-        }
-        else {
-            croak $self->predefined('login_failure');
-        }
-
-        $out .= $self->predefined('reply_3');
-
-        if ( $self->generate_backup(@options) ) {
-        	$out .= $self->predefined('generate_success');
-        }
-        else {
-        	croak $self->predefined('generate_failure');
-        }
+        $out .= $self->predefined('password_okay');
     }
-    return $out;
+    else {
+       croak $self->predefined('password_failure'); 
+    }
+
+    $out .= $self->predefined('reply_1');
+
+    if ($self->check_exclude_conf_file) {
+        $out .= $self->predefined('exclude_success');
+    }
+    else {
+	    $out .= $self->predefined('exclude_no_need');
+    }
+
+    $out .= $self->predefined('reply_2');
+
+    if ($self->cpanel_login) {
+        $out .= $self->predefined('login_success');
+    }
+    else {
+        croak $self->predefined('login_failure');
+    }
+
+    $out .= $self->predefined('reply_3');
+
+    if ( $self->generate_backup(@options) ) {
+    	$out .= $self->predefined('generate_success');
+    }
+    else {
+    	croak $self->predefined('generate_failure');
+    }
+
+return $out;
 }
 
 ########################################################################
