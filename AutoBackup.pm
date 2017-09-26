@@ -316,14 +316,22 @@ sub generate_backup {
         $default_options{dest} = 'scp';
 
         foreach (@cli_options) {
-            $default_options{server}
-                = ( m/^(?i:(?:server|host)(?:name)?=)([[:alnum:].-]+)$/ ) ? "$1" : undef;
-            $default_options{user}
-                = ( m/^(?i:user(?:name)?=)([\w@.-]+)$/ ) ? "$1" : undef;
-            $default_options{port}
-                = ( m/^(?i:port=)(\d+)$/ ) ? "$1" : undef;
-            $default_options{rdir}
-                = ( m/^(?i:(?:(?:r|target)?dir)=)([\w\s\/.-]+)$/ ) ? "$1" : undef;
+            if ( m/^(?i:(?:server|host)(?:name)?=)([[:alnum:].-]+)$/ ) {
+                $default_options{server} = "$1";
+                next;
+            }
+            if ( m/^(?i:user(?:name)?=)([\w@.-]+)$/ ) {
+                $default_options{user} = "$1";
+                next;
+            }
+            if ( m/^(?i:port=)(\d+)$/ ) {
+                $default_options{port} = "$1";
+                next;
+            }
+            if ( m/^(?i:(?:(?:r|target)?dir)=)([\w\s\/.-]+)$/ ) {
+                $default_options{rdir} = "$1";
+                next;
+            }
         }
 
         $self->{backup_status}
@@ -354,7 +362,6 @@ sub generate_backup {
 ##############################################
 
 sub get_backup_status {
-
     my $self = shift;
     if (defined $self->{backup_status}) {
         return $self->{backup_status};
@@ -440,7 +447,7 @@ sub init {
         $out .= $self->predefined('password_okay');
     }
     else {
-       croak $self->predefined('password_failure'); 
+       croak $self->predefined('password_failure');
     }
 
     $out .= $self->predefined('reply_1');
