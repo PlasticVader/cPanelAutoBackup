@@ -11,13 +11,22 @@ function get_module_dir() {
         }
     done
     unset each
-    printf "%s" "${module_dir}"
+    printf "%s" "${module_dir}/AutoBackup.pm"
 }
 
-function __install() {
+function __download() {
     local url="${1}"; shift
     local path="${1}"
     curl -s --url ${url} -o ${path}
+}
+
+function check_cpanel_auto_backup() {
+    local module_path=$(find $HOME -type f -name "AutoBackup.pm")
+    [[ -f ${module_path} ]] && {
+        printf "%s" "${module_path}"
+    } || {
+        printf "%d" "1"
+    }
 }
 
 function install_cpanel_auto_backup() {
@@ -25,16 +34,24 @@ function install_cpanel_auto_backup() {
         ['script_url']='https://raw.githubusercontent.com/PlasticVader/cPanelAutoBackup/master/cpbackup.pl'
         ['module_url']='https://raw.githubusercontent.com/PlasticVader/cPanelAutoBackup/master/AutoBackup.pm'
         ['script_path']="$HOME/cPanelAutoBackup/cpbackup.pl"
-        ['module_path']="$(get_module_dir)/AutoBackup.pm"
     )
+
+    local module_path=$(check_cpanel_auto_backup)
+
+    [[ ${module_path} != '1' ]] && {
+        installation[module_path]=${module_path}
+    } || {
+        installation[module_path]=$(get_module_dir)
+    }
+
     local installdir=${installation[script_path]%/*}
 
     [[ ! -d ${installdir} ]] && {
         mkdir ${installdir}
     }
 
-    __install ${installation[module_url]} ${installation[module_path]}
-    __install ${installation[script_url]} ${installation[script_path]}
+    __download ${installation[module_url]} ${installation[module_path]}
+    __download ${installation[script_url]} ${installation[script_path]}
 }
 
 install_cpanel_auto_backup
