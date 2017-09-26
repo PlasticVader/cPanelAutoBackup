@@ -1,52 +1,50 @@
-#///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////#
+#///////////////////////////////////////////////////////////////////////////////#
 # 
-# The automated backup "script" consists of two files: a Perl 5 module source cpanelAutobackup.pm and a Perl 5 script fullcpBackup.pl
+# The automated backup "script" consists of two files:
+# module: AutoBackup.pm and script: cpbackup.pl
 # Having a separate module has a number of pros, such as:
 #
 #	- Less chance of side effects;
 #	- Better error-handling;
-#	- Object Oriented (classic, without any postmodern Perl OOP modules, such as: Moose, Moo etc. Ensures compatibility);
+#	- Object Oriented (classic, without any postmodern 
+#      Perl OOP modules, such as: Moose, Moo etc.
+#      Ensures compatibility);
 #	- Simpler script structure;
 #   - Full SSL support;
 #
 # The cons include:
 #
-#   - The scripts have been written to have least side effects possible; however, there can be issues with using it on DSs and VPSs
-#     that might have corrupted cPanel Perl libraries;
-#   - The script focuses on not using ecnrypted connections, it might seem as a advantage; although, not quite as non-ssl support
-#     would give it more versatility;
+#   - The scripts have been written to have least side effects possible;
+#      however, there can be issues with using it on DSs and VPSs
+#      that might have corrupted cPanel Perl libraries;
+#   - The script focuses on not using ecnrypted connections, 
+#      it might seem as a advantage; although, not quite as non-ssl support
+#      would give it more versatility;
 #
-#////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////#
+#///////////////////////////////////////////////////////////////////////////////#
 # 
-# Pre-usage disclaimer:
-# 
-# The duo works fine on our Shared servers as the cPanel installations provide with the necessary Perl modules for the cpanelAutobackup's
-# proper functioning. 
-#
 # How to use it?
 # 
-# Using is rather easy. There is option to use it both from the command line/shell interface and as a cron job. 
-# First thing to do is check your local Perl module/library directories added to the Perl 5 environment, this can be done several ways: 
+# Using it is quite easy and straightforward. To quickly install it in the cPanel
+# account, run the following command either from the command line or a cron job:
 # 
-# 1) In your cPanel account => Perl Modules => under "Module Include Path";
-# 2) In the Shell env. just by printing out the contents of the modules includes array:
+# curl -sO https://raw.githubusercontent.com/PlasticVader/cPanelAutoBackup/master/cpbackup_install.sh && bash cpbackup_install.sh
 #
-#    perl -e 'print join "\n", @INC, "\n";'
+# This will install the script into ~/cPanelAutoBackup
+# and the module into one of the module directories in the @INC array.
 # 
-# The .pm files put into the directories are avaiable to be loaded from any Perl script that loads them with "use" built-in function.
-# The location of the .pl file may vary, there are options to make is executable and add to one of the $PATH directories or just call
-# it using the absolute path.
+# The next step is to just copy your cPanel account password after the 'local:' 
+# line in ~/cPanelAutoBackup/.cpbackup-auto.conf
 #
-#////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////#
+#///////////////////////////////////////////////////////////////////////////////#
 #
 # Passed arguments:
 #
-# The scripts supports passing arguments from the command line to be able to:
+# The script supports passing arguments from the command line to:
 #
-# - Upload the backups to a remote location;
-# - Specify another email address to sent the report to;
+# - Upload the backup to a remote location;
+# - Specify another email address to sent the report to or disable sending email;
 # 
-# ! The passwords are better to be hardcoded and not passed as arguments as this is not a very good practice !
 #
 # Arguments that can be passed to the script:
 #
@@ -81,34 +79,23 @@
 #     - silent
 #     - quiet
 #
-#  ! The arguments have validation, so that no one tries to try supplying hostname value into "port" or not valid email address !
+#  7) Output file (default is ~/cpbackup-report.txt):
 #
-#////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////#
+#     - file=
 #
-# In order to have the script upload to a remote machine, there are the following *mandatory* arguments to be passed to the script:
 #
-# -> 'remotePassword' => 'Your_Remote_User_Password' <- Should be specified during the object creation on line 30.
+#///////////////////////////////////////////////////////////////////////////////#
+#
+# In order to have the script upload remotely,
+# there is a need to make sure that the following
+# arguments have been supplied to the script:
+#
 # ->  server <- 
 # ->  user   <-
 # ->  port   <-
 # ->  dir    <-
 #
-# Otherwise the script will store the archive in the home directory.
+# As well as 'remote:' line contains the password for
+# the remote user.
 #
-#////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////#
-#
-# Email reporting
-# 
-# By default, the script will try getting the cPanel Contact Email if no "email=" argument supplied. In case of the account not having
-# the contact email address, no report will be sent out.
-#
-# "email=" argument is not mandatory and be changed or not supplied at all ( this got me an idea to add a "silent" feature ).
-#
-# 
-#
-#
-#
-#
-#
-#
-#////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////#
+#///////////////////////////////////////////////////////////////////////////////#
