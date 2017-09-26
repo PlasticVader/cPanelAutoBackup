@@ -28,8 +28,10 @@
 # Using it is quite easy and straightforward. To quickly install it in the cPanel
 # account, run the following command either from the command line or a cron job:
 # 
-# curl -sO https://raw.githubusercontent.com/PlasticVader/cPanelAutoBackup/master/cpbackup_install.sh && bash cpbackup_install.sh
-#
+
+curl -sO https://raw.githubusercontent.com/PlasticVader/cPanelAutoBackup/master/cpbackup_install.sh && bash cpbackup_install.sh
+
+
 # This will install the script into ~/cPanelAutoBackup
 # and the module into one of the module directories in the @INC array.
 # 
