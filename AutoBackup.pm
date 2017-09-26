@@ -407,9 +407,9 @@ sub predefined {
     $backup_failure
         = "  Full cPanel backup initialization failed:\n\n  $backup_status\n";
     $password_failure
-        = "  The passwords file $passwd is not present:\n\n  Aborting...\n";
+        = "\n\n  The passwords file $passwd is not present:\n\n  Aborting...\n";
     $password_okay
-        = "  The passwords file $passwd is present:\n\n  Proceeding...\n";
+        = "\n\n  The passwords file $passwd is present:\n\n  Proceeding...\n";
 
     %reply_types = (
         'reply_1'          => $reply_1,
@@ -489,7 +489,7 @@ sub run_backup {
             $output{file} = "$1";
         }
         else {
-            $output{file} = $self->{homepath} . '/cpbackup-report.txt';
+            $output{file} = $self->{homepath} . '/cPanelAutoBackup' . '/cpbackup-report.txt';
         }
     }
 
