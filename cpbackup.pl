@@ -31,14 +31,15 @@ sub get_hostname {
     return $hostname;
 }
 
-my ($homepath, $hostname, $autoback);
+my ($homepath, $installdir, $hostname, $autoback);
 
 $homepath = $ENV{HOME};
 $hostname = get_hostname();
+$installdir = '/cPanel-AutoBackup';
 $autoback = AutoBackup->new(
     'homepath'       => $homepath,
     'username'       => $ENV{USER},
-    'passwd'         => $homepath . '/.cpbackup-auto.conf',
+    'passwd'         => $homepath . $installdir . '/.cpbackup-auto.conf',
     'baseURL'        => 'https://' . $hostname . ':2083',
     'excludeFile'    => $homepath . '/cpbackup-exclude.conf',
 );
