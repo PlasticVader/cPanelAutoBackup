@@ -35,7 +35,7 @@ my ($homepath, $installdir, $hostname, $autoback);
 
 $homepath = $ENV{HOME};
 $hostname = get_hostname();
-$installdir = '/cPanel-AutoBackup';
+$installdir = '/cPanelAutoBackup';
 $autoback = AutoBackup->new(
     'homepath'       => $homepath,
     'username'       => $ENV{USER},

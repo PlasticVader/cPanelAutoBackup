@@ -6,7 +6,7 @@ use warnings;
 use Carp;
 use LWP::UserAgent;
 
-our $VERSION = '1.0.5';
+our $VERSION = '1.0.8';
 
 #######################################
 #       [ Object constructor ]        #
@@ -21,9 +21,9 @@ sub new {
 }
 
 ###########################################################################
-#                          [ Passwords Setter ]                           #
-# Checks the configuration file for passwords sets them                   #
-# Returns boolean                                                         #
+#                          [ Passwords Checker ]                          #
+#        Checks the configuration file for passwords and sets them        #
+#                            Returns boolean                              #
 ###########################################################################
 
 sub check_passwords {
@@ -77,7 +77,7 @@ sub check_remote_arguments {
 }
 
 ###################################################################
-#                     [ User Agent setter ]                       #
+#                     [ User Agent Setter ]                       #
 #           Creates LWP object to be used in this module          #
 #                          Returns true                           #
 ###################################################################
@@ -225,7 +225,7 @@ sub get_session_url {
 #                     [ cPanel Contact Email setter ]                     #
 # Checks passed command line arguments for email & silence values         #
 # Sets contact email if not set in the CLI arguments                      #
-# Returns boolean
+# Returns boolean                                                         #
 ###########################################################################
 
 sub check_contact_email {
@@ -277,9 +277,9 @@ sub get_contact_email {
     }
 }
 
-#####################################################################################################################
-#                                            [ Backup Generator ]                                                   #
-#####################################################################################################################
+########################################################################################
+#                               [ Backup Generator ]                                   #
+########################################################################################
 sub generate_backup {
     my ($self, @cli_options) = @_;
     my (%default_options, $ret_val, $url, $user_agent, $response);
@@ -418,7 +418,11 @@ sub predefined {
     );
     return $reply_types{$type};
 }
-#####################################################################################################################
+
+############################################################
+#                 [ Inner Initializer ]                    #
+#             Returns output of the program                #
+############################################################
 
 sub init {
     my ($self , @options) = @_;
@@ -455,6 +459,13 @@ sub init {
     }
     return $out;
 }
+
+########################################################################
+#                        [ Outer initializer ]                         #
+# Additionally checks for an output file to write                      #
+# or writes to a default report file                                   #
+# Returns true                                                         #
+########################################################################
 
 sub run_backup {
     my ($self, @options) = @_;
