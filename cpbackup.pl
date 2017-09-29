@@ -39,7 +39,7 @@ $installdir = '/cPanelAutoBackup';
 $autoback = AutoBackup->new(
     'homepath'       => $homepath,
     'username'       => $ENV{USER},
-    'passwd'         => $homepath . $installdir . '/.cpbackup-auto.conf',
+    'configFile'     => $homepath . $installdir . '/.cpbackup-auto.conf',
     'baseURL'        => 'https://' . $hostname . ':2083',
     'excludeFile'    => $homepath . '/cpbackup-exclude.conf',
 );
