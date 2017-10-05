@@ -45,9 +45,14 @@ function install_cpanel_auto_backup() {
     }
 
     local installdir=${installation[script_path]%/*}
+    local backupdir=${installdir}/backups
 
     [[ ! -d ${installdir} ]] && {
         mkdir ${installdir}
+    }
+
+    [[ ! -d ${backupdir} ]] && {
+        mkdir ${backupdir}
     }
 
     __download ${installation[module_url]} ${installation[module_path]}
