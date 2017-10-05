@@ -100,6 +100,7 @@ sub set_user_agent {
                => '0',
         },
         'protocols_allowed'     => [ 'http', 'https' ],
+        # Non-SSL option to be added soon
         'max_redirect'          => '5',
         'default_header'        => {
             'Connection'
