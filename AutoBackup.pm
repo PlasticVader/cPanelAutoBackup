@@ -107,7 +107,6 @@ sub set_user_agent {
         },
         'requests_redirectable' => [ 'GET', 'POST', ],
     );
-
     $self->{useragent} = LWP::UserAgent->new(%user_agent_options);
     return '1';
 }
@@ -124,7 +123,6 @@ sub get_user_agent {
     }
 }
 
-
 ###########################################################
 #                   [ cPanel Login ]                      #
 # Logs into the cPanel account and sets cpsession URL     #
@@ -139,6 +137,9 @@ sub cpanel_login {
 
     if (defined $self->{username}) {
         $user = $self->{username};
+    }
+    else {
+        croak 'The cPanel username was not defined!';
     }
 
     if ($self->set_user_agent) {
@@ -160,10 +161,10 @@ sub cpanel_login {
     }
     else {
         $self->{session_url}
-            = 'Failed to log into the cPanel account: '
-            . $response->status_line
+            = 'Failed to log into the cPanel account, the server responded with: '
+            . "[ $response->status_line ]"
             . ' please double-check the provided password in '
-            . $self->{passwd};
+            . "[ $self->{configFile} ]";
         $ret_val = '0';
     }
     return $ret_val;
@@ -200,9 +201,6 @@ sub check_contact_email {
         $ret_val = '1';
     }
     else {
-        $self->{contactEmail}
-            = 'Failed to get Contact Email from cPanel Contact Info: '
-            . $response->status_line;
         $ret_val = '0';
     }
     return $ret_val;
@@ -222,11 +220,57 @@ sub get_contact_email {
 
 ##############################################################################
 #                     [ Applying configuration methods ]                     #
+# Checks the remote upload, email, password and output file                  #
+# in the config options array and returns a hash reference with the options  #
 ##############################################################################
+sub is_locahost {
+    my ($self, $config) = @_;
+    my @localhost;
+    my $ret_val;
+    @localhost = grep { m/^(?i:(?:server|host)=localhost)$/ } @{$config};
+    if (@localhost) {
+        $ret_val = '1';
+    }
+    else {
+        $ret_val = '0';
+    }
+    return $ret_val;
+}
 
+##############################################################################
+sub set_localhost_options {
+    my ($self, $pass) = @_;
+    my ($home, $dir, $user);
+    my %ret_val;
+
+    $home    = $self->{homepath};
+    $user    = $self->{username};
+    $dir     = $home . '/cPanelAutoBackup/backups';
+    %ret_val = (
+        'rdir'   => $dir,
+        'pass'   => $pass,
+        'port'   => '21098',
+        'server' => 'localhost',
+        'user'   => $user,
+        'dest'   => 'scp',
+    );
+    return \%ret_val;
+}
+
+##############################################################################
+sub check_remote_options {
+    my ($self, $config) = @_;
+
+    if ( ${$config}{pass}  &&  ${$config}{server} &&
+         ${$config}{port}  &&  ${$config}{user}   &&
+         ${$config}{rdir} ) { return '1'; }
+    else { return '0'; }
+}
+
+##############################################################################
 sub get_remote_options {
     my ($self, $config) = @_;
-    my ($size, $pass_size);
+    my ($size, $size_okay, $user_has_at);
     my @remote_options;
     my %ret_val;
 
@@ -234,14 +278,16 @@ sub get_remote_options {
         = grep { m/(?<![#])(?i:server|host|user|r?dir|port|remote)/ } @{$config};
 
     $size = @remote_options;
-    $pass_size = '5';
-    if ($size == $pass_size) {
+    $size_okay = '5';
+
+    if ($size == $size_okay) {
         foreach (@remote_options) {
             if ( m/^(?i:(?:server|host)(?:name)?=)([[:alnum:].-]+)$/ ) {
                 $ret_val{server} = "$1";
                 next;
             }
-            if ( m/^(?i:user(?:name)?=)([\w@.-]+)$/ ) {
+            if ( m/^(?i:user(?:name)?=)((?:[\w.-]+)([@]?)(?:[\w.-]+))$/ ) {
+                $user_has_at = ($2) ? '1' : '0';
                 $ret_val{user} = "$1";
                 next;
             }
@@ -249,24 +295,15 @@ sub get_remote_options {
                 $ret_val{port} = "$1";
                 next;
             }
-            if ( m/^(?i:(?:(?:r|target)?dir)=)([\w\/.-]+)$/ ) {
+            if ( m/^(?i:dir=)(.+)$/ ) {
                 $ret_val{rdir} = "$1";
+                next;
             }
             if ( m/^(?i:remote=)(.+)$/ ) {
                 $ret_val{pass} = "$1";
             }
         }
-
-        if ( 
-            $ret_val{user} &&
-            $ret_val{user} =~ m/^(?i:[\w.-]+@[[:alnum:].-]+)$/
-            ) {
-            $ret_val{dest} = 'ftp';
-            $ret_val{port} = '21';
-        }
-        else {
-            $ret_val{dest} = 'scp';
-        }
+        $ret_val{dest} = ($user_has_at) ? 'ftp' : 'scp';
     }
     else {
         $ret_val{dest} = 'homedir';
@@ -274,6 +311,7 @@ sub get_remote_options {
     return \%ret_val;
 }
 
+##############################################################################
 sub get_email_options {
     my ($self, $config) = @_;
     my @email;
@@ -304,73 +342,78 @@ sub get_email_options {
     return \%ret_val;
 }
 
+##############################################################################
 sub get_output_file {
     my ($self, $config) = @_;
     my @file;
-    my %ret_val;
+    my $ret_val;
 
     @file
         = grep { m/(?<![#])(?:file|report)/ } @{$config};
 
     if (@file) {
         $file[0] =~ m/^(?i:(?:file|report)=)(.+)$/;
-        $ret_val{file} = "$1";
+        $ret_val = "$1";
     }
     else {
-        $ret_val{file}
+        $ret_val
             = $self->{homepath}
             . '/cPanelAutoBackup'
             . '/cpbackup-report.txt';
     }
-    return \%ret_val;
+    return $ret_val;
 }
 
+##############################################################################
 sub get_password {
     my ($self, $config) = @_;
     my @pass;
-    my %ret_val;
+    my $ret_val;
 
     @pass
         = grep { m/(?<![#])(?i:local)/ } @{$config};
 
     if (@pass) {
         $pass[0] =~ m/^(?i:local=)([[:graph:]]+)$/;
-        $ret_val{local} = "$1";
+        $ret_val = "$1";
     }
     else {
-        croak 'No cPanel password in the configuration!';
+        croak "No cPanel password in the configuration file $self->{configFile}!";
     }
-    return \%ret_val;
+    return $ret_val;
 }
 
+##############################################################################
 sub apply_config {
     my ($self, @config) = @_;
     my ($remote, $email, $pass, $file);
     my %ret_val;
 
     $pass = $self->get_password(\@config);
-    while(my ($key, $val) = each %{$pass}) {
-        $ret_val{$key} = $val;
-    }
 
-    if ( $self->cpanel_login($ret_val{local}) ) {
-        $email = $self->get_email_options(\@config);
-        $ret_val{local} = undef;
-        while(my ($key, $val) = each %{$email}) {
-            $ret_val{$key} = $val;
-        }
+    if ( $self->cpanel_login($pass) ) {
+         $email = $self->get_email_options(\@config);
+
+         while(my ($key, $val) = each %{$email}) {
+             $ret_val{$key} = $val;
+         }
     }
     else {
-        croak $self->predefined('login_failure');
+        croak $self->verbose('login_failure');
     }
-    
-    $remote = $self->get_remote_options(\@config);
+
+    if ( $self->is_locahost(\@config) ) {
+        $remote = $self->set_localhost_options($pass);
+    }
+    else {
+        $remote = $self->get_remote_options(\@config);
+    }
     while(my ($key, $val) = each %{$remote}) {
         $ret_val{$key} = $val;
     }
 
     $file = $self->get_output_file(\@config);
-    $self->{output_file} = ${$file}{file};
+    $self->{output_file} = $file;
 
     return \%ret_val;
 }
@@ -394,9 +437,11 @@ sub check_config {
     }
 
     if (-f $config_file) {
-        open my $fh, '<', $config_file or croak "Could not open $config_file for reading!";
+        open my $fh, '<', $config_file
+            or croak "Could not open $config_file for reading!";
         @lines   = <$fh>;
-        close $fh or croak "Could not close the file $config_file after reading!";
+        close $fh
+            or croak "Could not close $config_file after reading!";
         @config  = $self->concat_array(\@lines, \@cli_arguments);
         $ret_val = $self->apply_config(@config);
     }
@@ -405,7 +450,6 @@ sub check_config {
     }
     return $ret_val;
 }
-
 
 ##########################################################################
 #                   [ Exclude Config File Checker ]                      #
@@ -418,28 +462,48 @@ sub check_config {
 
 sub check_exclude_conf_file {
     my $self = shift;
-    my ($filename, $ret_val, @matched_lines);
+    my ($exclude_conf, $ret_val);
+    my ($pattern, %patterns);
+    my (@matched_lines, $size, $size_miss, $size_okay);
 
     if (defined $self->{excludeFile}) {
-        $filename = $self->{excludeFile};
+        $exclude_conf = $self->{excludeFile};
     }
 
-    if (-f $filename) {
-        open my $fh, '<', $filename or croak;
-        @matched_lines
-            = grep { m/^(?:backup-[*][.]tar[.]gz)$/ } <$fh>;
-        close $fh or croak;
+    %patterns = (
+        'archive' => 'backup-*.tar.gz',
+        'dir'     => 'cPanelAutoBackup/',
+    );
 
-        if (@matched_lines) {
+    if (-f $exclude_conf) {
+        open my $fh, '<', $exclude_conf
+            or croak "Could not open $exclude_conf for reading!";
+        @matched_lines
+            = grep { m/^(?:backup-[*][.]tar[.]gz|cPanelAutoBackup)$/ } <$fh>;
+        close $fh or croak "Could not close $exclude_conf after reading!";
+
+        $size_okay = '2';
+        $size_miss = '1';
+        $size      = @matched_lines;
+
+        if ($size == $size_okay) {
             $ret_val = '0';
         }
-        else {
-            $self->write_exclude_conf_file($filename);
-            $ret_val = '1';
+        elsif ($size == $size_miss) {
+            $pattern = ($matched_lines[0] =~ m/^(?:backup-)/)
+            ? "$patterns{dir}\n"
+            : "$patterns{archive}\n"
+            ;
         }
+        else {
+            $pattern = "$patterns{archive}\n$patterns{dir}\n";
+        }
+        $self->write_exclude_conf_file($exclude_conf, $pattern);
+        $ret_val = '1';
     }
     else {
-        $self->write_exclude_conf_file($filename);
+        $pattern = "$patterns{archive}\n$patterns{dir}\n";
+        $self->write_exclude_conf_file($exclude_conf, $pattern);
         $ret_val = '1'
     }
     return $ret_val;
@@ -453,18 +517,22 @@ sub check_exclude_conf_file {
 #############################################
 
 sub write_exclude_conf_file {
-    my ($self, $filename) = @_;
-    my $exclusion_pattern = 'backup-*.tar.gz';
-    open my $fh, '+>>', $filename or croak;
-    printf {$fh} "%s\n", $exclusion_pattern;
-    close $fh or croak;
+    my ($self, $filename, $pattern) = @_;
+    open my $fh, '>>', $filename
+        or croak "Could not open $filename for writing!";
+    printf {$fh} $pattern;
+    close $fh
+        or croak "Could not close $filename after writing!";
     return '1';
 }
 
-
 ########################################################################################
 #                               [ Backup Generator ]                                   #
+# Deferences the configuration options hash and sends out the request for backup       #
+# generation.                                                                          #
+# Returns boolean.                                                                     #
 ########################################################################################
+
 sub generate_backup {
     my ($self, $options) = @_;
     my (%default_options, $ret_val, $url, $user_agent, $response);
@@ -483,21 +551,15 @@ sub generate_backup {
             = "The backup report will not be sent out.\n";
     }
 
-    if (
-        $default_options{pass} &&
-        $default_options{server} &&
-        $default_options{port} &&
-        $default_options{user} &&
-        $default_options{rdir}
-       ) {
-        $self->{backup_status}
+    if ( $self->check_remote_options(\%default_options) ) {
+         $self->{backup_status}
             .= "  The backup archive will be moved to [ $default_options{server} ]\n"
             . "  Via the port [ $default_options{port} ]\n"
             . "  Into the remote directory [ $default_options{rdir} ]\n"
             . "  Of the remote user [ $default_options{user} ]\n";
     }
     else {
-        $self->{backup_status}
+         $self->{backup_status}
             .= "  The backup archive will be stored in [ $self->{homepath} ]\n";
     }
 
@@ -507,7 +569,8 @@ sub generate_backup {
     }
     else {
         $self->{backup_status}
-            .= "\n[ $response->status_line ]\n";
+            = "Could not send the POST request!\n"
+            . "The server responded with: [ $response->status_line ]";
         $ret_val = '0';
     }
     return $ret_val;
@@ -528,14 +591,13 @@ sub get_backup_status {
 #                         [ Pre-defined replies ]                          #
 ############################################################################
 
-sub predefined {
+sub verbose {
     my ($self, $type) = @_;
     my ($reply_1, $reply_2);
     my ($exclude_conf, $exclude_success, $exclude_no_need);
-    my ($session_url, $login_success, $login_failure);
+    my ($session_url, $login_failure);
     my ($backup_status, $backup_success, $backup_failure);
-    my ($password_okay, $password_failure);
-    my (%reply_types);
+    my %reply_types;
 
     $exclude_conf  = $self->{excludeFile};
     $session_url   = $self->get_session_url;
@@ -579,28 +641,23 @@ sub predefined {
 
 sub run_backup {
     my ($self, @cli_arguments) = @_;
-    my ($out, $options, $local_password, $output_file);
+    my ($out, $options);
 
-    $out .= $self->predefined('reply_1');
-
+        $out .= $self->verbose('reply_1');
     $options = $self->check_config(@cli_arguments);
-
     if ($self->check_exclude_conf_file) {
-        $out .= $self->predefined('exclude_success');
+        $out .= $self->verbose('exclude_success');
     }
     else {
-	    $out .= $self->predefined('exclude_no_need');
+	    $out .= $self->verbose('exclude_no_need');
     }
-
-    $out .= $self->predefined('reply_2');
-
+        $out .= $self->verbose('reply_2');
     if ( $self->generate_backup($options) ) {
-    	$out .= $self->predefined('generate_success');
+    	$out .= $self->verbose('generate_success');
     }
     else {
-    	croak $self->predefined('generate_failure');
+    	croak $self->verbose('generate_failure');
     }
-
     open STDOUT, '>', $self->{output_file} or croak;
     printf $out;
     close STDOUT or croak;
