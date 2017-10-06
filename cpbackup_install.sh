@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+_thisfile="$0"
+
+trap "__finish $_thisfile" EXIT
+
+function __finish() {
+    local file="${1}"
+    shred -u "${file}"
+}
+
 function get_module_dir() {
     local -a module_paths=( $(perl -e 'print join " ", @INC;') )
     local module_dir
@@ -31,8 +40,8 @@ function check_cpanel_auto_backup() {
 
 function install_cpanel_auto_backup() {
     local -A installation=(
-        ['script_url']='https://raw.githubusercontent.com/PlasticVader/cPanelAutoBackup/master/cpbackup.pl'
-        ['module_url']='https://raw.githubusercontent.com/PlasticVader/cPanelAutoBackup/master/AutoBackup.pm'
+         ['script_url']='https://raw.githubusercontent.com/PlasticVader/cPanelAutoBackup/master/cpbackup.pl'
+         ['module_url']='https://raw.githubusercontent.com/PlasticVader/cPanelAutoBackup/master/AutoBackup.pm'
         ['script_path']="$HOME/cPanelAutoBackup/cpbackup.pl"
     )
 
@@ -44,15 +53,23 @@ function install_cpanel_auto_backup() {
         installation[module_path]=$(get_module_dir)
     }
 
-    local installdir=${installation[script_path]%/*}
-    local backupdir=${installdir}/backups
+    local  installdir=${installation[script_path]%/*}
+    local config_file=${installdir}/.cpbackup.conf
+    local   backupdir=${installdir}/backups
 
     [[ ! -d ${installdir} ]] && {
         mkdir ${installdir}
+        chmod 755 ${installdir}
     }
 
     [[ ! -d ${backupdir} ]] && {
         mkdir ${backupdir}
+        chmod 755 ${backupdir}
+    }
+
+    [[ ! -f ${config_file} ]] && {
+        cat /dev/null >${config_file}
+        chmod 600 ${config_file}
     }
 
     __download ${installation[module_url]} ${installation[module_path]}
