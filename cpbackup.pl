@@ -5,28 +5,31 @@ use warnings;
 
 use AutoBackup;
 
+our $VERSION = '1.1.0';
+
 sub get_hostname {
     my $hosts_file = '/etc/hosts';
-    my $hostname;
+    my ($hostname, $pattern);
+
+    $pattern
+        = '((?:server|business|host|premium)'
+        . '(?:\d+[.])'
+        . '(?:web-hosting|registrar-servers)'
+        . '(?:[.]com))'
+        ;
+
     if (defined $ENV{HOSTNAME}) {
         $hostname = $ENV{HOSTNAME};
     }
     else {
-        open my $fh, '<', $hosts_file or die;
+        open my $fh, '<', $hosts_file
+            or die "Could not open $hosts_file for reading!";
         while (<$fh>) {
-                m{
-                    (
-                        (?:server|business|host|premium)
-                        (?:\d+)
-                        [.]
-                        (?:web-hosting|registrar-servers)
-                        [.]
-                        (?:com)
-                    )
-                }x;
-                $hostname = "$1";
+            m/$pattern/;
+            $hostname = "$1";
         }
-        close $fh or die;
+        close $fh
+            or die "Could not close $hosts_file after reading!";
     }
     return $hostname;
 }
@@ -39,9 +42,8 @@ $installdir = '/cPanelAutoBackup';
 $autoback = AutoBackup->new(
     'homepath'       => $homepath,
     'username'       => $ENV{USER},
-    'configFile'     => $homepath . $installdir . '/.cpbackup-auto.conf',
+    'configFile'     => $homepath . $installdir . '/.cpbackup.conf',
     'baseURL'        => 'https://' . $hostname . ':2083',
     'excludeFile'    => $homepath . '/cpbackup-exclude.conf',
 );
-
 $autoback->run_backup(@ARGV);
