@@ -1,104 +1,90 @@
-#///////////////////////////////////////////////////////////////////////////////#
+#////////////////////////////////////////////////////////////////////////////////////////#
 # 
 # The automated backup "script" consists of two files:
 # a module: AutoBackup.pm and a script: cpbackup.pl
 # 
-# Having a separate module has a number of pros, such as:
-#
-#	- Less chance of side effects;
-#	- Better error-handling;
-#	- Object Oriented (classic, without any postmodern 
-#      Perl OOP modules, such as: Moose, Moo etc.
-#      Ensures compatibility);
-#	- Simpler script structure;
-#   - Full SSL support;
-#
-# The cons include:
-#
-#   - The scripts have been written to have least side effects possible;
-#      however, there can be issues with using it on DSs and VPSs
-#      that might have corrupted cPanel Perl libraries;
-#   - The script focuses on not using ecnrypted connections, 
-#      it might seem as a advantage; although, not quite as non-ssl support
-#      would give it more versatility;
-#
-#///////////////////////////////////////////////////////////////////////////////#
+#////////////////////////////////////////////////////////////////////////////////////////#
 # 
-# How to use it?
+# How to install?
 # 
-# Using it is quite easy and straightforward. To quickly install it in the cPanel
-# account, run the following command either from the command line or a cron job:
-# 
-
-curl -sO https://raw.githubusercontent.com/PlasticVader/cPanelAutoBackup/master/cpbackup_install.sh && bash cpbackup_install.sh
-
-
-# This will install the script into ~/cPanelAutoBackup directory
-# and the module into one of the module directories in the @INC array.
-# 
-# The next step is to just copy your cPanel account password after the 'local:' 
-# line in ~/cPanelAutoBackup/.cpbackup-auto.conf
+# To quickly install it in the cPanel account, run the following command either
+# from the command line or a using a cron job:
+# +------------------------------------------------------------+
+# | curl -sOL https://git.io/vd0vs && bash cpbackup_install.sh |
+# +------------------------------------------------------------+
 #
-#///////////////////////////////////////////////////////////////////////////////#
+# This will:
 #
-# Passed arguments:
+#    1) Install the script into ~/cPanelAutoBackup directory;
+#    2) Install the module into one of the module directories in the @INC array;
+#    3) Create the ~/cPanelAutoBackup/backups directory as a default storage of
+#       backup archives;
+#    4) Create am empty configuration file ~/cPanelAutoBackup/.cpbackup.conf
 #
-# The script supports passing arguments from the command line to:
+#////////////////////////////////////////////////////////////////////////////////////////#
 #
-# - Upload the backup to a remote location;
-# - Specify another email address to sent the report to or disable sending email;
-# 
+# How to use?
 #
-# Arguments that can be passed to the script:
+# The script does not require you making changes to the code, unless you really
+# want to (there is always an option to run the installation cron/command again)
 #
-#  1) Remote hostname/IPv4 address specification:
+# The main configuration is in ~/cPanelAutoBackup/.cpbackup.conf
+# The following configuration details are read by the script after "=":
 #
-#     - server=
-#     - host=
-#     - servername=
-#     - hostname=
-# 
-#  2) Remote user specification:
+# 1) local=           <= Your cPanel account password
+# 2) remote=          <= Remote user password
+# 3) email=           <= Email address to send the report to
+# 4) host=            <= The remote host to copy the backup to
+# 5) port=            <= Remote host port to connect to
+# 6) user=            <= Remote user to login to
+# 7) dir=             <= Remote directory path of the remote user
+# 8) silent|quiet     <= This will disable sending a report via an email
+#                      +---------------------------------------------------+
+#                      | the script will check your cPanel contact email   |
+#                      | in case of it not being specified                 |
+#                      | silent|quiet will disable this so no mail is sent |
+#                      +---------------------------------------------------+
 #
-#     - user=
-#     - username=
+#////////////////////////////////////////////////////////////////////////////////////////#
 #
-#  3) Remote port specification:
+# Small notes:
 #
-#     - port=
+# - The script checks you cPanel backup exclusion file and adds the necessary
+#   lines in order for the backup to ommit already created full backup archives
+#   as well as the default backup storate directory ~/cPanelAutoBackup/backups
 #
-#  4) Remote target directory specification:
+# - There is an option to pass configuration details as arguments to the script
+#   *except* passwords "local=" and "remote=".
+#   If the argument passed is already present in the configuration file it will
+#   be overwritten.
 #
-#     - dir=
-#     - rdir=
-#     - targetdir=
+# - If you wish not to always store the backups in the home folder, make sure to
+#   enter the cPanel password "local=your_password" and "host=localhost"
+#   this will store the backups in the default directory ~/cPanelAutoBackup/backups
+#   +----------------------------------------------------------------------------+
+#   ! Please keep in mind that cPanel will first create the archive in home dir  !
+#   ! and after that move it to the default storage directory, this can cause    !
+#   ! *moderate resource usage* in the account                                   !
+#   +----------------------------------------------------------------------------+
 #
-#  5) Email to send the backup report to specification:
+# - When specifying the configuration details for the remote backup upload, please note
+#   that if the remote username was set as "user@domain.tld" the script will adjust 
+#   itself for an FTP upload otherwise it adjusts itself for a secure copy upload (scp).
+#   +-----------------------------------------------------------------------------------+
+#   | If one of the remote upload config detail was missed then the script will put the |
+#   | backup into the homedirectory                                                     |
+#   +-----------------------------------------------------------------------------------+
 #
-#     - email=
+#////////////////////////////////////////////////////////////////////////////////////////#
 #
-#  6) Silent mode:
+# Future versions are planned to have the following features:
 #
-#     - silent
-#     - quiet
+# - Another Perl module that would catch the PIDs of initialized services in order to
+#   move the backup without using secure copy to localhost;
 #
-#  7) Output file (default is ~/cPanelAutoBackup/cpbackup-report.txt):
+# - Choose your storage directory without code editing
+#   (this will be added sooner that you think);
 #
-#     - file=
+# - Cron job setup via configuration file;
 #
-#
-#///////////////////////////////////////////////////////////////////////////////#
-#
-# In order to have the script upload remotely,
-# there is a need to make sure that the following
-# arguments have been supplied to the script:
-#
-# ->  server <- 
-# ->  user   <-
-# ->  port   <-
-# ->  dir    <-
-#
-# As well as 'remote:' line contains the password for
-# the remote user.
-#
-#///////////////////////////////////////////////////////////////////////////////#
+#////////////////////////////////////////////////////////////////////////////////////////#
