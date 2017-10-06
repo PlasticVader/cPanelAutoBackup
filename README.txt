@@ -19,7 +19,8 @@
 #    2) Install the module into one of the module directories in the @INC array;
 #    3) Create the ~/cPanelAutoBackup/backups directory as a default storage of
 #       backup archives;
-#    4) Create am empty configuration file ~/cPanelAutoBackup/.cpbackup.conf
+#    4) Create am empty configuration file ~/cPanelAutoBackup/.cpbackup.conf;
+#    5) Delete itself on finish;
 #
 #////////////////////////////////////////////////////////////////////////////////////////#
 #
@@ -61,10 +62,10 @@
 # - If you wish not to always store the backups in the home folder, make sure to
 #   enter the cPanel password "local=your_password" and "host=localhost"
 #   this will store the backups in the default directory ~/cPanelAutoBackup/backups
-#   +----------------------------------------------------------------------------+
+#   +---------------------------------Important----------------------------------+
 #   ! Please keep in mind that cPanel will first create the archive in home dir  !
 #   ! and after that move it to the default storage directory, this can cause    !
-#   ! *moderate resource usage* in the account                                   !
+#   ! *above par I/O usage* in the account, pretty much as any backup script     !
 #   +----------------------------------------------------------------------------+
 #
 # - When specifying the configuration details for the remote backup upload, please note
@@ -85,6 +86,6 @@
 # - Choose your storage directory without code editing
 #   (this will be added sooner that you think);
 #
-# - Cron job setup via configuration file;
+# - Non-SSL support;
 #
 #////////////////////////////////////////////////////////////////////////////////////////#
