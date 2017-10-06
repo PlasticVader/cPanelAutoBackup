@@ -5,7 +5,6 @@ use warnings;
 
 use Carp;
 use LWP::UserAgent;
-use Data::Dumper;
 
 our $VERSION = '1.1.0';
 
