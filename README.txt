@@ -10,7 +10,7 @@
 # To quickly install it in the cPanel account, run the following command either
 # from the command line or a using a cron job:
 # +------------------------------------------------------------+
-# | curl -sOL https://git.io/vd0vs && bash cpbackup_install.sh |
+# |       curl -sOL https://git.io/vd0vs && bash vd0vs         |
 # +------------------------------------------------------------+
 #
 # This will:
