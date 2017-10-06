@@ -49,7 +49,7 @@ sub concat_array {
 
     foreach my $element (@lead) {
         my $comparison
-            = ($element =~ m/^(\w{3,9})(?:=.+)?$/)
+            = ($element =~ m/^(\w{3,9})(?:=)?(?:.*)$/)
             ? "$1"
             : undef
             ;
@@ -324,6 +324,7 @@ sub get_email_options {
         foreach (@email) {
             if ( m/^(?i:silent|quiet)$/ ) {
                 $ret_val{email_radio} = '0';
+                $ret_val{email} = undef;
                 last;
             }
             if ( m/^(?i:email=)([\w.-]+@[[:alnum:].-]+)$/ ) {
@@ -479,7 +480,7 @@ sub check_exclude_conf_file {
         open my $fh, '<', $exclude_conf
             or croak "Could not open $exclude_conf for reading!";
         @matched_lines
-            = grep { m/^(?:backup-[*][.]tar[.]gz|cPanelAutoBackup)$/ } <$fh>;
+            = grep { m/(?:backup-|cPanel)/ } <$fh>;
         close $fh or croak "Could not close $exclude_conf after reading!";
 
         $size_okay = '2';
@@ -490,10 +491,10 @@ sub check_exclude_conf_file {
             $ret_val = '0';
         }
         elsif ($size == $size_miss) {
-            $pattern = ($matched_lines[0] =~ m/^(?:backup-)/)
-            ? "$patterns{dir}\n"
-            : "$patterns{archive}\n"
-            ;
+            $pattern = ($matched_lines[0] =~ m/(?:backup-)/)
+                     ? "$patterns{dir}\n"
+                     : "$patterns{archive}\n"
+                     ;
         }
         else {
             $pattern = "$patterns{archive}\n$patterns{dir}\n";
