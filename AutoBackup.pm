@@ -465,7 +465,7 @@ sub check_exclude_conf_file {
     my $self = shift;
     my ($exclude_conf, $ret_val);
     my ($pattern, %patterns);
-    my (@matched_lines, $size, $size_miss, $size_okay);
+    my (@matched_lines, $backup_archive, $storage_dir);
 
     if (defined $self->{excludeFile}) {
         $exclude_conf = $self->{excludeFile};
@@ -477,36 +477,39 @@ sub check_exclude_conf_file {
     );
 
     if (-f $exclude_conf) {
+ 
+        $ret_val = '0';
+
         open my $fh, '<', $exclude_conf
             or croak "Could not open $exclude_conf for reading!";
-        @matched_lines
-            = grep { m/(?:backup-|cPanel)/ } <$fh>;
+        @matched_lines = grep { m/(?:backup-|cPanel)/ } <$fh>;
         close $fh or croak "Could not close $exclude_conf after reading!";
 
-        $size_okay = '2';
-        $size_miss = '1';
-        $size      = @matched_lines;
+        foreach (@matched_lines) {
+            if (m{ (?:backup-[*][.]tar[.]gz) }x) {
+                $backup_archive = '1';
+                next;
+            }
+            if (m{ (?:cPanelAutoBackup[/]) }x) {
+                $storage_dir = '1';
+            }
+        }
 
-        if ($size == $size_okay) {
-            $ret_val = '0';
+        if (!$backup_archive) {
+            $pattern = "$patterns{archive}\n";
+            $ret_val = $self->write_exclude_conf_file($exclude_conf, $pattern);
         }
-        elsif ($size == $size_miss) {
-            $pattern = ($matched_lines[0] =~ m/(?:backup-)/)
-                     ? "$patterns{dir}\n"
-                     : "$patterns{archive}\n"
-                     ;
+        if (!$storage_dir) {
+            $pattern = "$patterns{dir}\n";
+            $ret_val = $self->write_exclude_conf_file($exclude_conf, $pattern);
         }
-        else {
-            $pattern = "$patterns{archive}\n$patterns{dir}\n";
-        }
-        $self->write_exclude_conf_file($exclude_conf, $pattern);
-        $ret_val = '1';
+
     }
     else {
         $pattern = "$patterns{archive}\n$patterns{dir}\n";
-        $self->write_exclude_conf_file($exclude_conf, $pattern);
-        $ret_val = '1'
+        $ret_val = $self->write_exclude_conf_file($exclude_conf, $pattern);
     }
+
     return $ret_val;
 }
 
