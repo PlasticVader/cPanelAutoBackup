@@ -1,4 +1,10 @@
 #////////////////////////////////////////////////////////////////////////////////////////#
+#
+#               This is free software. It may be used, redistributed
+#            and/or modified under the terms of the Perl Artistic License
+#                   [ http://www.perl.com/perl/misc/Artistic.html ]
+#
+#////////////////////////////////////////////////////////////////////////////////////////#
 # 
 # The automated backup "script" consists of two files:
 # a module: AutoBackup.pm and a script: cpbackup.pl
@@ -78,14 +84,9 @@
 #
 #////////////////////////////////////////////////////////////////////////////////////////#
 #
-# Future versions are planned to have the following features:
+#                                 [ Future activities ]
 #
-# - Another Perl module that would catch the PIDs of initialized services in order to
-#   move the backup without using secure copy to localhost;
+# - Currently the little bundle does what it should.
 #
-# - Choose your storage directory without code editing
-#   (this will be added sooner that you think);
-#
-# - Non-SSL support;
 #
 #////////////////////////////////////////////////////////////////////////////////////////#
